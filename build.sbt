@@ -5,16 +5,23 @@ lazy val coercible = project.in(file("."))
 
 lazy val core = module("core")
 
-lazy val defaultScalacOptions = Seq(
+lazy val defaultScalacOptions = scalacOptions ++= Seq(
   "-Xfatal-warnings",
   "-unchecked",
   "-feature",
   "-deprecation",
+  "-language:experimental.macros",
   "-language:higherKinds",
   "-language:implicitConversions"
 )
 
-lazy val defaultTestDependencies = Seq(
+lazy val defaultDependencies = libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
+  "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+  "org.typelevel" %% "macro-compat" % "1.1.1"
+)
+
+lazy val defaultTestDependencies = libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.13.4",
   "org.scalatest" %% "scalatest" % "3.0.0",
   "org.scalaz" %% "scalaz-core" % "7.2.15"
@@ -34,7 +41,9 @@ def module(path: String) = {
 }
 
 def applyDefaultSettings(project: Project) = project.settings(
-  scalacOptions ++= defaultScalacOptions,
-  libraryDependencies ++= defaultTestDependencies,
+  defaultScalacOptions,
+  defaultDependencies,
+  defaultTestDependencies,
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.patch),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 )

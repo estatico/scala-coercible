@@ -1,5 +1,6 @@
 package io.estatico.coercible
 
+import io.estatico.coercible
 import org.scalatest.FlatSpec
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
@@ -75,5 +76,25 @@ class CoercibleTest extends FlatSpec with GeneratorDrivenPropertyChecks {
 
     assert((Right(1.2f): Either[String, Float]).void == Right(()))
     assert((Left("foo"): Either[String, Float]).void == Left("foo"))
+  }
+
+  it should "coerce TupleBuilder[Nothing]" in {
+
+    import CoercibleTest.TupleBuilder
+
+    assert(TupleBuilder[Int](1, 2) == (1, 2))
+    assert(TupleBuilder[Float](1.2f, 2) == (1.2f, 2))
+  }
+}
+
+object CoercibleTest {
+
+  final class TupleBuilder[A] private {
+    def apply[B](a: A, b: B): (A, B) = (a, b)
+  }
+
+  object TupleBuilder {
+    def apply[A]: TupleBuilder[A] = instance.coerce[TupleBuilder[A]]
+    private val instance = new TupleBuilder[Nothing]
   }
 }
