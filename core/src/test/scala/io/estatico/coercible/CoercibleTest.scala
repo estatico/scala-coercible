@@ -2,6 +2,7 @@ package io.estatico.coercible
 
 import io.estatico.coercible
 import org.scalatest.FlatSpec
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 class CoercibleTest extends FlatSpec with GeneratorDrivenPropertyChecks {
@@ -85,6 +86,36 @@ class CoercibleTest extends FlatSpec with GeneratorDrivenPropertyChecks {
     assert(TupleBuilder[Int](1, 2) == (1, 2))
     assert(TupleBuilder[Float](1.2f, 2) == (1.2f, 2))
   }
+
+  it should "not coerce Functor[Option]" in {
+
+    import scalaz.Functor
+    import scalaz.std.option._
+
+    val F = Functor[Option]
+    assertCompiles("F.map(Option(1))(_ + 1)")
+    assertCompileErrorMessage("F.coerce[Functor[List]]", "Cannot coerce non-final class")
+    assertCompiles("F.coerce[Functor[List]]")
+  }
+
+  private def assertCompileErrorMessage(code: String, expectedError: String): Unit = {
+    try {
+      assertCompiles(code)
+      throw new TestFailedException(s"No compiler error, expected: $expectedError", 2)
+    } catch {
+      case e: TestFailedException =>
+        // Will throw if e.message returns None
+        e.message.get match {
+          case CompilerErrorRegex(actualError) =>
+            if (actualError != expectedError) {
+              throw new TestFailedException(s"""Expected compiler error "$expectedError", got: $actualError""", 2)
+            }
+        }
+    }
+  }
+
+  private val CompilerErrorRegex =
+    """Expected no compiler error, but got the following [^ ]+ error: "(.*)", for code: .*""".r
 }
 
 object CoercibleTest {
